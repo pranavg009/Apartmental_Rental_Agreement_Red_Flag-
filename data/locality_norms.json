@@ -1,0 +1,24 @@
+{
+  "_disclaimer": "Synthetic starter benchmark data for demo purposes, approximating commonly cited patterns across Indian metros. Not sourced from an official survey -- replace with real regional data for production use.",
+  "metro_tier1": {
+    "label": "Tier-1 Metro (e.g. Mumbai, Delhi NCR, Bengaluru, Pune, Hyderabad, Chennai)",
+    "deposit_months": 3,
+    "notice_days": 30,
+    "lock_in_months": 6,
+    "rent_increase_percent": 7
+  },
+  "tier2": {
+    "label": "Tier-2 City (e.g. Jaipur, Lucknow, Kochi, Chandigarh, Coimbatore)",
+    "deposit_months": 2,
+    "notice_days": 30,
+    "lock_in_months": 6,
+    "rent_increase_percent": 5
+  },
+  "tier3": {
+    "label": "Tier-3 / Smaller City or Town",
+    "deposit_months": 2,
+    "notice_days": 15,
+    "lock_in_months": 3,
+    "rent_increase_percent": 5
+  }
+}

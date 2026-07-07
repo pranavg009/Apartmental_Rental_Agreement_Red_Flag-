@@ -1,0 +1,22 @@
+clause_text,category,expected_risk
+"The Tenant shall pay a refundable security deposit equal to two (2) months' rent.",deposit,green
+"The Tenant shall pay a refundable security deposit equal to five (5) months' rent.",deposit,yellow
+"The Tenant shall pay a security deposit equal to ten (10) months' rent. Non-refundable if vacating before 24 months.",deposit,red
+"Either party may terminate this agreement by giving 30 days' written notice.",notice_period,green
+"The Tenant must give 60 days' written notice; Landlord may terminate with 15 days' notice.",notice_period,yellow
+"The Tenant must give 90 days' written notice. The Landlord may terminate immediately without notice.",notice_period,red
+"There shall be a lock-in period of 6 months, terminable by mutual consent in emergencies.",lock_in,green
+"There shall be a lock-in period of 11 months; full remaining rent due if vacated early.",lock_in,yellow
+"There shall be a lock-in period of 24 months; forfeiture of deposit plus 3 months penalty if vacated early.",lock_in,red
+"Monthly rent shall be increased by 5% annually with 60 days notice.",rent_increase,green
+"Landlord reserves the right to increase rent at their discretion during lock-in with 15 days notice.",rent_increase,yellow
+"Landlord may increase rent by any amount at any time without prior notice.",rent_increase,red
+"Landlord responsible for painting before move-in; no charges unless tenant causes damage.",painting_charges,green
+"One month's rent deducted for painting regardless of wall condition.",painting_charges,yellow
+"Two months' rent deducted unconditionally for painting even if tenant repaints themselves.",painting_charges,red
+"Landlord bears structural repairs; tenant bears minor day-to-day maintenance.",maintenance,green
+"Tenant bears all maintenance costs including structural repairs during tenancy.",maintenance,yellow
+"Tenant bears full responsibility for all repairs including structural damage regardless of cause.",maintenance,red
+"Either party may terminate per notice period; no penalty after lock-in ends.",termination,green
+"Landlord may terminate at any time without cause given 15 days notice.",termination,yellow
+"Landlord may enter and repossess without court process if rent delayed by even one day.",termination,red

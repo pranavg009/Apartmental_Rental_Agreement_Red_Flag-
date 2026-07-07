@@ -1,0 +1,45 @@
+{
+  "_disclaimer": "Synthetic starter reference data based on commonly cited general norms in Indian metros. Not legal advice. Verify against local/state tenancy law before relying on this data.",
+  "deposit": {
+    "typical_min_months": 2,
+    "typical_max_months": 3,
+    "caution_above_months": 6,
+    "red_flag_above_months": 8,
+    "notes": "Some states (e.g. Karnataka draft rules) propose capping deposits at ~2-3 months rent. Deposits above 6 months are uncommon and worth questioning. Non-refundable deposits are a strong red flag."
+  },
+  "notice_period": {
+    "typical_days": 30,
+    "caution_above_days": 60,
+    "red_flag_above_days": 90,
+    "red_flag_asymmetry": "If landlord's required notice is much shorter than tenant's (e.g. landlord 15 days vs tenant 60-90 days), this one-sided imbalance is a red flag.",
+    "notes": "30 days is the most common notice period in standard agreements."
+  },
+  "lock_in_period": {
+    "typical_months": 6,
+    "caution_above_months": 11,
+    "red_flag_above_months": 18,
+    "notes": "Lock-in periods exist to protect both parties from short-term churn, but should allow reasonable early exit (e.g. with notice + partial penalty), not outright forfeiture."
+  },
+  "rent_increase": {
+    "typical_annual_percent": 5,
+    "caution_above_percent": 10,
+    "red_flag": "Any clause allowing the landlord unilateral, unlimited, or no-notice rent increases is a red flag regardless of percentage.",
+    "notes": "5-10% annual increase on renewal is common practice."
+  },
+  "painting_charges": {
+    "typical": "Landlord bears painting cost before move-in; tenant only pays for damage beyond normal wear and tear.",
+    "red_flag": "Unconditional/flat painting deduction (fixed months' rent) regardless of actual wall condition is a red flag, as it charges the tenant even if no painting is needed."
+  },
+  "maintenance": {
+    "typical": "Landlord bears structural/major repair costs; tenant bears minor day-to-day upkeep.",
+    "red_flag": "Clauses shifting full structural repair liability (regardless of cause) onto the tenant are unusual and worth negotiating."
+  },
+  "termination": {
+    "typical": "Either party may terminate with agreed notice; no penalty after lock-in ends.",
+    "red_flag": "Clauses allowing landlord to terminate/repossess without court process, or enter the property without notice, may conflict with local tenancy protections and are a strong red flag."
+  },
+  "utilities": {
+    "typical": "Billed as per actual usage/meter readings.",
+    "red_flag": "Flat, non-itemized utility charges set solely at landlord's discretion, with no bills provided, reduce transparency and are worth questioning."
+  }
+}
