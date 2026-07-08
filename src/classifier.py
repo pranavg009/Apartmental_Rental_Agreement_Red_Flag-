@@ -71,3 +71,30 @@ def classify_with_llm(clause_text: str, call_llm_fn) -> str:
     )
     response = call_llm_fn(prompt).strip().lower()
     return response if response in VALID_CATEGORIES else "other"
+
+def upgrade_low_confidence_with_llm(clauses: list[Clause]) -> list[Clause]:
+    """
+    Re-classify only the clauses the keyword matcher couldn't confidently
+    place (category == "other"), using the LLM. Leaves confidently-matched
+    clauses untouched to keep cost/latency low.
+    """
+    import os
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return clauses  # no key configured -> silently keep keyword-only results
+
+    import anthropic
+    client = anthropic.Anthropic(api_key=api_key)
+
+    def call_llm(prompt: str) -> str:
+        response = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=20,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return response.content[0].text
+
+    for clause in clauses:
+        if clause.category == "other":
+            clause.category = classify_with_llm(clause.original_text, call_llm)
+    return clauses
