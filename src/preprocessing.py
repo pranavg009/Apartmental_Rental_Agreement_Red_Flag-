@@ -21,6 +21,28 @@ _CLAUSE_HEADING_PATTERN = re.compile(
     r"(?m)^\s*(\d{1,2})[\.\)]\s+([A-Z][A-Za-z /,-]{2,60})\s*$"
 )
 
+# Matches "Clause 1:", "Clause 1 -", "CLAUSE 1."
+_CLAUSE_WORD_PATTERN = re.compile(
+    r"(?im)^\s*clause\s+(\d{1,2})\s*[:.\-]\s*(.{2,60})\s*$"
+)
+
+# Matches "ARTICLE I", "Article 1", "ARTICLE 1 - MAINTENANCE"
+_ARTICLE_PATTERN = re.compile(
+    r"(?im)^\s*article\s+([IVXLCDM\d]{1,6})\s*[:.\-]?\s*(.{0,60})\s*$"
+)
+
+# Matches bullet-prefixed headings: "• Security Deposit", "- Notice Period"
+_BULLET_HEADING_PATTERN = re.compile(
+    r"(?m)^\s*[•\-\*]\s+([A-Z][A-Za-z /,-]{2,60})\s*$"
+)
+
+_HEADING_PATTERNS = [
+    _CLAUSE_HEADING_PATTERN,
+    _CLAUSE_WORD_PATTERN,
+    _ARTICLE_PATTERN,
+    _BULLET_HEADING_PATTERN,
+]
+
 
 def segment_clauses(cleaned_text: str) -> list[Clause]:
     """
@@ -28,7 +50,12 @@ def segment_clauses(cleaned_text: str) -> list[Clause]:
     (e.g. "1. SECURITY DEPOSIT"). Falls back to paragraph-based splitting if
     no numbered headings are detected (unstructured agreements).
     """
-    matches = list(_CLAUSE_HEADING_PATTERN.finditer(cleaned_text))
+    matches = []
+    for pattern in _HEADING_PATTERNS:
+        found = list(pattern.finditer(cleaned_text))
+        if len(found) >= 2:  # need at least 2 headings to trust this pattern as the doc's style
+            matches = found
+            break
 
     if matches:
         clauses = []
