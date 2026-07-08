@@ -56,6 +56,7 @@ def process_agreement(
 
     report(f"Classifying {len(clauses)} clause(s)...")
     clauses = classifier.classify_clauses(clauses)
+    clauses = classifier.upgrade_low_confidence_with_llm(clauses)
 
     report("Scoring risk against reference norms...")
     flags = []
