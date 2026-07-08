@@ -93,57 +93,57 @@ st.components.v1.html(report_ui.render_hero_with_dotted_surface_html(), height=2
 
 with st.sidebar:
     st.markdown('<div class="rfa-side-eyebrow">Step 1</div><div class="rfa-side-title">Provide your agreement</div>', unsafe_allow_html=True)
-    with st.sidebar:
-    st.markdown(...)  # Step 1 label, unchanged
+
     with st.form("analyze_form"):
-        input_mode = st.radio(...)
-        # ...(file_uploader / text_area / selectbox blocks, unchanged)...
-        st.markdown(...)  # Step 2 label, unchanged
-        tier_key = st.selectbox(...)
-        run_button = st.form_submit_button("Analyze Agreement", type="primary", use_container_width=True)
-    input_mode = st.radio(
-        "How would you like to provide the agreement?",
-        ["📄 Upload file", "✍️ Paste text", "🧪 Try a sample"],
-        label_visibility="collapsed",
-    )
-
-    file_path = None
-    raw_text = None
-
-    if input_mode == "📄 Upload file":
-        uploaded = st.file_uploader("Upload agreement (.txt, .pdf, .docx)", type=["txt", "pdf", "docx"])
-        if uploaded is not None:
-            suffix = os.path.splitext(uploaded.name)[1]
-            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-                tmp.write(uploaded.getvalue())
-                file_path = tmp.name
-
-    elif input_mode == "✍️ Paste text":
-        raw_text = st.text_area("Paste agreement text here", height=220, label_visibility="collapsed",
-                                 placeholder="Paste the full agreement text here...")
-
-    else:
-        sample_choice = st.selectbox(
-            "Choose a synthetic sample",
-            ["sample_agreement_1.txt (mostly fair)", "sample_agreement_2.txt (mixed)", "sample_agreement_3.txt (predatory)"],
+        input_mode = st.radio(
+            "How would you like to provide the agreement?",
+            ["📄 Upload file", "✍️ Paste text", "🧪 Try a sample"],
             label_visibility="collapsed",
         )
-        sample_filename = sample_choice.split(" ")[0]
-        file_path = os.path.join(os.path.dirname(__file__), "..", "data", sample_filename)
 
-    st.markdown('<div class="rfa-side-eyebrow" style="margin-top:18px;">Step 2</div><div class="rfa-side-title">Compare to your region</div>', unsafe_allow_html=True)
-    tier_options = {"none": "Skip — don't compare to a region"}
-    tier_options.update(locality_benchmark.list_city_tiers())
-    tier_key = st.selectbox(
-        "Compare your terms against typical values for:",
-        options=list(tier_options.keys()),
-        format_func=lambda k: tier_options[k],
-        label_visibility="collapsed",
-    )
-    city_tier = None if tier_key == "none" else tier_key
+        file_path = None
+        raw_text = None
+        uploaded = None
 
-    st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
-    run_button = st.button("Analyze Agreement", type="primary", use_container_width=True)
+        if input_mode == "📄 Upload file":
+            uploaded = st.file_uploader("Upload agreement (.txt, .pdf, .docx)", type=["txt", "pdf", "docx"])
+
+        elif input_mode == "✍️ Paste text":
+            raw_text = st.text_area("Paste agreement text here", height=220, label_visibility="collapsed",
+                                     placeholder="Paste the full agreement text here...")
+
+        else:
+            sample_choice = st.selectbox(
+                "Choose a synthetic sample",
+                ["sample_agreement_1.txt (mostly fair)", "sample_agreement_2.txt (mixed)", "sample_agreement_3.txt (predatory)"],
+                label_visibility="collapsed",
+            )
+            sample_filename = sample_choice.split(" ")[0]
+            file_path = os.path.join(os.path.dirname(__file__), "..", "data", sample_filename)
+
+        st.markdown('<div class="rfa-side-eyebrow" style="margin-top:18px;">Step 2</div><div class="rfa-side-title">Compare to your region</div>', unsafe_allow_html=True)
+        tier_options = {"none": "Skip — don't compare to a region"}
+        tier_options.update(locality_benchmark.list_city_tiers())
+        tier_key = st.selectbox(
+            "Compare your terms against typical values for:",
+            options=list(tier_options.keys()),
+            format_func=lambda k: tier_options[k],
+            label_visibility="collapsed",
+        )
+        city_tier = None if tier_key == "none" else tier_key
+
+        st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
+        run_button = st.form_submit_button("Analyze Agreement", type="primary", use_container_width=True)
+
+    # File uploads must be written to a temp file *outside* the form block above,
+    # because `uploaded` (the UploadedFile object) is only meaningful once the
+    # form has actually been submitted -- doing this inside the form would use
+    # a stale/previous upload on the render that happens before submission.
+    if input_mode == "📄 Upload file" and uploaded is not None:
+        suffix = os.path.splitext(uploaded.name)[1]
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            tmp.write(uploaded.getvalue())
+            file_path = tmp.name
 
 if run_button:
     if not file_path and not raw_text:
@@ -249,5 +249,6 @@ if "result" in st.session_state:
     if st.button("🔄 Analyze another agreement"):
         del st.session_state["result"]
         st.rerun()
+
 else:
     st.markdown(report_ui.render_empty_state_html(), unsafe_allow_html=True)
