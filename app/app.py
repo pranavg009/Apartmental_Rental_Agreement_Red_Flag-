@@ -150,6 +150,10 @@ if run_button:
         st.session_state["result"] = result
         st.session_state["city_tier_label"] = tier_options.get(tier_key) if city_tier else None
 
+if st.button("🔄 Analyze another agreement"):
+    del st.session_state["result"]
+    st.rerun()
+    
 if "result" in st.session_state:
     result = st.session_state["result"]
     flags = result["flags"]
