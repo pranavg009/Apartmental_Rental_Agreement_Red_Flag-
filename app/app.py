@@ -141,14 +141,25 @@ if run_button:
     if not file_path and not raw_text:
         st.warning("Please upload a file, paste text, or select a sample first.")
     else:
-        with st.status("Starting analysis...", expanded=False) as status:
-            result = pipeline.process_agreement(
-                file_path=file_path, raw_text=raw_text, city_tier=city_tier,
-                progress_callback=lambda msg: status.update(label=msg),
-            )
-            status.update(label="Analysis complete", state="complete")
-        st.session_state["result"] = result
-        st.session_state["city_tier_label"] = tier_options.get(tier_key) if city_tier else None
+        try:
+            with st.status("Starting analysis...", expanded=False) as status:
+                result = pipeline.process_agreement(
+                    file_path=file_path, raw_text=raw_text, city_tier=city_tier,
+                    progress_callback=lambda msg: status.update(label=msg),
+                )
+                status.update(label="Analysis complete", state="complete")
+            st.session_state["result"] = result
+            st.session_state["city_tier_label"] = tier_options.get(tier_key) if city_tier else None
+        except ValueError as e:
+            if "NO_TEXT_EXTRACTED" in str(e):
+                st.error(
+                    "⚠️ We couldn't read any text from this file. This usually means it's "
+                    "a scanned or photographed PDF (image only, no selectable text). "
+                    "Please try **✍️ Paste text** instead, or upload a digital/text-based PDF or DOCX."
+                )
+            else:
+                st.error(f"Something went wrong while analyzing this agreement: {e}")
+            st.session_state.pop("result", None)
 
 if "result" in st.session_state:
     result = st.session_state["result"]
