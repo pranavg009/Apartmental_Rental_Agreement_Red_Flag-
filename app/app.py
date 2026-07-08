@@ -93,7 +93,14 @@ st.components.v1.html(report_ui.render_hero_with_dotted_surface_html(), height=2
 
 with st.sidebar:
     st.markdown('<div class="rfa-side-eyebrow">Step 1</div><div class="rfa-side-title">Provide your agreement</div>', unsafe_allow_html=True)
-    form = st.form("analyze_form")
+    with st.sidebar:
+    st.markdown(...)  # Step 1 label, unchanged
+    with st.form("analyze_form"):
+        input_mode = st.radio(...)
+        # ...(file_uploader / text_area / selectbox blocks, unchanged)...
+        st.markdown(...)  # Step 2 label, unchanged
+        tier_key = st.selectbox(...)
+        run_button = st.form_submit_button("Analyze Agreement", type="primary", use_container_width=True)
     input_mode = st.radio(
         "How would you like to provide the agreement?",
         ["📄 Upload file", "✍️ Paste text", "🧪 Try a sample"],
