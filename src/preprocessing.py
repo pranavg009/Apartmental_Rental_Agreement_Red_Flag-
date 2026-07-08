@@ -59,6 +59,16 @@ def segment_clauses(cleaned_text: str) -> list[Clause]:
 
     if matches:
         clauses = []
+
+        # Capture any text before the first numbered heading (party names,
+        # property address, agreement date) instead of silently dropping it.
+        preamble_end = matches[0].start()
+        preamble_text = cleaned_text[:preamble_end].strip()
+        if preamble_text:
+            clauses.append(
+                Clause(clause_id="C0", original_text=preamble_text, start_char=0, end_char=preamble_end)
+            )
+
         for i, match in enumerate(matches):
             start = match.start()
             end = matches[i + 1].start() if i + 1 < len(matches) else len(cleaned_text)
