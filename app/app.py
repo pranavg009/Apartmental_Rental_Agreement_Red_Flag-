@@ -226,6 +226,8 @@ if "result" in st.session_state:
         )
 
     st.markdown(f'<div class="rfa-footer">⚖ {result["disclaimer"]}</div>', unsafe_allow_html=True)
-
+if st.button("🔄 Analyze another agreement"):
+    del st.session_state["result"]
+    st.rerun()
 else:
     st.markdown(report_ui.render_empty_state_html(), unsafe_allow_html=True)
