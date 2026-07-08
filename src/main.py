@@ -54,6 +54,13 @@ def process_agreement(
     cleaned = preprocessing.clean_text(text)
     clauses = preprocessing.segment_clauses(cleaned)
 
+    if not clauses:
+        raise ValueError(
+            "NO_TEXT_EXTRACTED: We couldn't find any readable text in this document. "
+            "This usually happens with scanned or photographed PDFs (image-only, no "
+            "text layer). Try pasting the agreement text directly instead."
+        )
+
     report(f"Classifying {len(clauses)} clause(s)...")
     clauses = classifier.classify_clauses(clauses)
     clauses = classifier.upgrade_low_confidence_with_llm(clauses)
