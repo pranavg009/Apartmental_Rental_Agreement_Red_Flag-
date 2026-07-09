@@ -13,6 +13,7 @@ Approach: hybrid.
 """
 from src.utils import Clause, extract_number_and_unit, clamp_confidence
 from src.retrieval import get_reference
+from src import locality_benchmark
 
 _HARD_RED_PHRASES = [
     "without notice",
@@ -36,7 +37,7 @@ _HARD_RED_PHRASES = [
 _QUALITATIVE_CATEGORIES = {"painting_charges", "maintenance", "termination", "utilities"}
 
 
-def score_clause(clause: Clause, monthly_rent: float = None) -> dict:
+def score_clause(clause: Clause, monthly_rent: float = None, city_tier: str = None) -> dict:
     """
     Returns a dict with: risk_level, confidence, reason, needs_human_review,
     normalized_value, normalized_unit.
@@ -48,6 +49,14 @@ def score_clause(clause: Clause, monthly_rent: float = None) -> dict:
     deposit's unit isn't "currency", or monthly_rent is unknown, this has no
     effect.
 
+    city_tier: optional key into data/locality_norms.json. When provided, the
+    caution/red thresholds for deposit, notice_period, lock_in, and
+    rent_increase are derived from that tier's typical value instead of the
+    generic fixed thresholds -- so selecting a region can change the actual
+    verdict, not just a comparison caption. Falls back to the fixed generic
+    thresholds when no tier is selected, or the tier has no data for a
+    category.
+
     normalized_value/normalized_unit on the returned dict are the exact
     (possibly converted) figures used to make the decision -- callers (e.g.
     main.py's locality-benchmark step) should reuse these rather than
@@ -56,6 +65,13 @@ def score_clause(clause: Clause, monthly_rent: float = None) -> dict:
     ref = get_reference(clause.category)
     text_lower = clause.original_text.lower()
     value, unit = extract_number_and_unit(clause.original_text)
+
+    def threshold(generic_key: str, generic_default: float, tier_field: str) -> float:
+        if city_tier:
+            tier_thresholds = locality_benchmark.get_tier_relative_thresholds(clause.category, city_tier)
+            if tier_thresholds and tier_thresholds.get(tier_field) is not None:
+                return tier_thresholds[tier_field]
+        return ref.get(generic_key, generic_default)
 
     if clause.category == "deposit" and unit == "currency" and value is not None and monthly_rent:
         value = round(value / monthly_rent, 2)
@@ -69,29 +85,36 @@ def score_clause(clause: Clause, monthly_rent: float = None) -> dict:
 
     # --- Numeric threshold rules per category ---
     if clause.category == "deposit" and unit == "months" and value is not None:
-        if value >= ref.get("red_flag_above_months", 8):
-            return _result("red", 0.9, f"Deposit of {value:g} months exceeds the red-flag threshold.", value=value, unit=unit)
-        if value >= ref.get("caution_above_months", 6):
-            return _result("yellow", 0.75, f"Deposit of {value:g} months is above typical (2-3 months).", value=value, unit=unit)
+        red_t = threshold("red_flag_above_months", 8, "red")
+        caution_t = threshold("caution_above_months", 6, "caution")
+        if value >= red_t:
+            return _result("red", 0.9, f"Deposit of {value:g} months exceeds the red-flag threshold ({red_t:g} months).", value=value, unit=unit)
+        if value >= caution_t:
+            return _result("yellow", 0.75, f"Deposit of {value:g} months is above typical (caution threshold: {caution_t:g} months).", value=value, unit=unit)
         return _result("green", 0.8, f"Deposit of {value:g} months is within typical range.", value=value, unit=unit)
 
     if clause.category == "notice_period" and unit == "days" and value is not None:
-        if value >= ref.get("red_flag_above_days", 90):
-            return _result("red", 0.7, f"Notice period of {int(value)} days is unusually long / one-sided.", value=value, unit=unit)
-        if value >= ref.get("caution_above_days", 60):
-            return _result("yellow", 0.6, f"Notice period of {int(value)} days is above typical (30 days).", value=value, unit=unit)
+        red_t = threshold("red_flag_above_days", 90, "red")
+        caution_t = threshold("caution_above_days", 60, "caution")
+        if value >= red_t:
+            return _result("red", 0.7, f"Notice period of {int(value)} days is unusually long / one-sided (red-flag threshold: {red_t:g} days).", value=value, unit=unit)
+        if value >= caution_t:
+            return _result("yellow", 0.6, f"Notice period of {int(value)} days is above typical (caution threshold: {caution_t:g} days).", value=value, unit=unit)
         return _result("green", 0.75, f"Notice period of {int(value)} days is within typical range.", value=value, unit=unit)
 
     if clause.category == "lock_in" and unit == "months" and value is not None:
-        if value >= ref.get("red_flag_above_months", 18):
-            return _result("red", 0.85, f"Lock-in period of {int(value)} months is unusually long.", value=value, unit=unit)
-        if value >= ref.get("caution_above_months", 11):
-            return _result("yellow", 0.65, f"Lock-in period of {int(value)} months is above typical (6 months).", value=value, unit=unit)
+        red_t = threshold("red_flag_above_months", 18, "red")
+        caution_t = threshold("caution_above_months", 11, "caution")
+        if value >= red_t:
+            return _result("red", 0.85, f"Lock-in period of {int(value)} months is unusually long (red-flag threshold: {red_t:g} months).", value=value, unit=unit)
+        if value >= caution_t:
+            return _result("yellow", 0.65, f"Lock-in period of {int(value)} months is above typical (caution threshold: {caution_t:g} months).", value=value, unit=unit)
         return _result("green", 0.75, f"Lock-in period of {int(value)} months is within typical range.", value=value, unit=unit)
 
     if clause.category == "rent_increase" and unit == "percent" and value is not None:
-        if value >= ref.get("caution_above_percent", 10):
-            return _result("yellow", 0.6, f"Rent increase of {value:g}% is above typical (5-10%).", value=value, unit=unit)
+        caution_t = threshold("caution_above_percent", 10, "caution")
+        if value >= caution_t:
+            return _result("yellow", 0.6, f"Rent increase of {value:g}% is above typical (caution threshold: {caution_t:g}%).", value=value, unit=unit)
         return _result("green", 0.75, f"Rent increase of {value:g}% is within typical range.", value=value, unit=unit)
 
     # --- Hard qualitative red-flag phrase detection ---
