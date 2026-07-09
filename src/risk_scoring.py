@@ -36,42 +36,63 @@ _HARD_RED_PHRASES = [
 _QUALITATIVE_CATEGORIES = {"painting_charges", "maintenance", "termination", "utilities"}
 
 
-def score_clause(clause: Clause) -> dict:
+def score_clause(clause: Clause, monthly_rent: float = None) -> dict:
     """
-    Returns a dict with: risk_level, confidence, reason, needs_human_review
+    Returns a dict with: risk_level, confidence, reason, needs_human_review,
+    normalized_value, normalized_unit.
+
+    monthly_rent: optional figure (extracted once from the whole document via
+    utils.extract_monthly_rent) used to convert a deposit stated as a bare
+    currency amount ("Rs. 1,00,000") into a months-of-rent equivalent, so it
+    can be judged against the same thresholds as "3 months' rent". If the
+    deposit's unit isn't "currency", or monthly_rent is unknown, this has no
+    effect.
+
+    normalized_value/normalized_unit on the returned dict are the exact
+    (possibly converted) figures used to make the decision -- callers (e.g.
+    main.py's locality-benchmark step) should reuse these rather than
+    re-extracting, so the score and the regional comparison always agree.
     """
     ref = get_reference(clause.category)
     text_lower = clause.original_text.lower()
     value, unit = extract_number_and_unit(clause.original_text)
+
+    if clause.category == "deposit" and unit == "currency" and value is not None and monthly_rent:
+        value = round(value / monthly_rent, 2)
+        unit = "months"
+
+    if clause.category == "notice_period" and unit == "months" and value is not None:
+        value = round(value * 30, 1)
+        unit = "days"
 
     hard_flag_hits = [p for p in _HARD_RED_PHRASES if p in text_lower]
 
     # --- Numeric threshold rules per category ---
     if clause.category == "deposit" and unit == "months" and value is not None:
         if value >= ref.get("red_flag_above_months", 8):
-            return _result("red", 0.9, f"Deposit of {int(value)} months exceeds the red-flag threshold.")
+            return _result("red", 0.9, f"Deposit of {value:g} months exceeds the red-flag threshold.", value=value, unit=unit)
         if value >= ref.get("caution_above_months", 6):
-            return _result("yellow", 0.75, f"Deposit of {int(value)} months is above typical (2-3 months).")
-        return _result("green", 0.8, f"Deposit of {int(value)} months is within typical range.")
+            return _result("yellow", 0.75, f"Deposit of {value:g} months is above typical (2-3 months).", value=value, unit=unit)
+        return _result("green", 0.8, f"Deposit of {value:g} months is within typical range.", value=value, unit=unit)
 
     if clause.category == "notice_period" and unit == "days" and value is not None:
         if value >= ref.get("red_flag_above_days", 90):
-            return _result("red", 0.7, f"Notice period of {int(value)} days is unusually long / one-sided.")
+            return _result("red", 0.7, f"Notice period of {int(value)} days is unusually long / one-sided.", value=value, unit=unit)
         if value >= ref.get("caution_above_days", 60):
-            return _result("yellow", 0.6, f"Notice period of {int(value)} days is above typical (30 days).")
-        return _result("green", 0.75, f"Notice period of {int(value)} days is within typical range.")
+            return _result("yellow", 0.6, f"Notice period of {int(value)} days is above typical (30 days).", value=value, unit=unit)
+        return _result("green", 0.75, f"Notice period of {int(value)} days is within typical range.", value=value, unit=unit)
 
     if clause.category == "lock_in" and unit == "months" and value is not None:
         if value >= ref.get("red_flag_above_months", 18):
-            return _result("red", 0.85, f"Lock-in period of {int(value)} months is unusually long.")
+            return _result("red", 0.85, f"Lock-in period of {int(value)} months is unusually long.", value=value, unit=unit)
         if value >= ref.get("caution_above_months", 11):
-            return _result("yellow", 0.65, f"Lock-in period of {int(value)} months is above typical (6 months).")
-        return _result("green", 0.75, f"Lock-in period of {int(value)} months is within typical range.")
+            return _result("yellow", 0.65, f"Lock-in period of {int(value)} months is above typical (6 months).", value=value, unit=unit)
+        return _result("green", 0.75, f"Lock-in period of {int(value)} months is within typical range.", value=value, unit=unit)
 
     if clause.category == "rent_increase" and unit == "percent" and value is not None:
         if value >= ref.get("caution_above_percent", 10):
-            return _result("yellow", 0.6, f"Rent increase of {value}% is above typical (5-10%).")
-        return _result("green", 0.75, f"Rent increase of {value}% is within typical range.")
+            return _result("yellow", 0.6, f"Rent increase of {value:g}% is above typical (5-10%).", value=value, unit=unit)
+        return _result("green", 0.75, f"Rent increase of {value:g}% is within typical range.", value=value, unit=unit)
 
     # --- Hard qualitative red-flag phrase detection ---
     if hard_flag_hits:
@@ -80,6 +101,7 @@ def score_clause(clause: Clause) -> dict:
             "red",
             confidence,
             f"Contains concerning phrasing: {', '.join(hard_flag_hits[:3])}.",
+            value=value, unit=unit,
         )
 
     # --- Qualitative categories with no red-flag phrasing: reasonably confident green ---
@@ -88,6 +110,7 @@ def score_clause(clause: Clause) -> dict:
             "green",
             0.65,
             "No concerning language detected; appears to follow standard practice.",
+            value=value, unit=unit,
         )
 
     # --- No numeric match, no hard flag, and category expects a number (deposit,
@@ -97,15 +120,18 @@ def score_clause(clause: Clause) -> dict:
         0.35,
         "No strong numeric or phrase-based signal found; low-confidence assessment.",
         needs_human_review=True,
+        value=value, unit=unit,
     )
 
 
-def _result(risk_level, confidence, reason, needs_human_review=False):
+def _result(risk_level, confidence, reason, needs_human_review=False, value=None, unit=None):
     return {
         "risk_level": risk_level,
         "confidence": clamp_confidence(confidence),
         "reason": reason,
         "needs_human_review": needs_human_review,
+        "normalized_value": value,
+        "normalized_unit": unit,
     }
 
 
