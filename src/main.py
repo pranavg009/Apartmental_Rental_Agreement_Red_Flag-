@@ -11,7 +11,7 @@ from src import negotiation_coach, guardrails, logger, heatmap
 from src import fairness_score as fairness_score_module
 from src import locality_benchmark
 from src import accessibility
-from src.utils import RiskFlag, extract_number_and_unit
+from src.utils import RiskFlag, extract_monthly_rent
 
 
 def process_agreement(
@@ -65,10 +65,16 @@ def process_agreement(
     clauses = classifier.classify_clauses(clauses)
     clauses = classifier.upgrade_low_confidence_with_llm(clauses)
 
+    # Best-effort: scan the whole document once for a stated monthly rent
+    # figure, so a deposit written as a bare currency amount ("Rs. 1,00,000")
+    # can be converted to a months-of-rent equivalent during scoring, instead
+    # of being unscoreable just because it isn't phrased as "X months' rent".
+    monthly_rent = extract_monthly_rent(cleaned)
+
     report("Scoring risk against reference norms...")
     flags = []
     for clause in clauses:
-        score = risk_scoring.score_clause(clause)
+        score = risk_scoring.score_clause(clause, monthly_rent=monthly_rent)
         score = guardrails.apply_confidence_guardrail(score)
 
         explanation = explainer.explain_clause(clause.category, score["risk_level"], score["reason"])
@@ -98,7 +104,8 @@ def process_agreement(
         # markdown/PDF export) and the raw numeric fields (used by the UI to
         # typeset figures in the data typeface) are stored on the flag.
         if city_tier:
-            value, unit = extract_number_and_unit(clause.original_text)
+            value = score.get("normalized_value")
+            unit = score.get("normalized_unit")
             benchmark = locality_benchmark.compare_to_locality(clause.category, value, unit, city_tier)
         else:
             benchmark = None
