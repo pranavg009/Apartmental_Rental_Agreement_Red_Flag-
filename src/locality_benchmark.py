@@ -96,3 +96,45 @@ def compare_to_locality(category: str, value: float, unit: str, city_tier: str, 
         "delta_percent": delta_percent,
         "comparison_text": comparison_text,
     }
+
+
+# Multipliers applied to a tier's typical value to derive caution/red-flag
+# thresholds for that region, so "compare to your region" changes the actual
+# verdict (not just a caption). Calibrated from this project's own fixed
+# reference_norms.json ratios (e.g. deposit: caution=6 is 2x the generic
+# typical_max=3, red=8 is ~2.67x) rather than picked arbitrarily -- so a
+# Tier-1 selection reproduces today's generic thresholds almost exactly,
+# while Tier-2/3 (which have lower typical values) become correspondingly
+# stricter.
+_TIER_THRESHOLD_MULTIPLIERS = {
+    "deposit": {"caution": 2.0, "red": 2.67},
+    "notice_period": {"caution": 2.0, "red": 3.0},
+    "lock_in": {"caution": 1.83, "red": 3.0},
+    "rent_increase": {"caution": 2.0},
+}
+
+
+def get_tier_relative_thresholds(category: str, city_tier: str, path: str = _DEFAULT_PATH) -> dict | None:
+    """
+    Derive caution/red thresholds for `category` from the selected tier's
+    typical value. Returns {"caution": float, "red": float | None} or None
+    if this category isn't tier-benchmarkable or the tier is unknown.
+    """
+    field = _CATEGORY_FIELD_MAP.get(category)
+    multipliers = _TIER_THRESHOLD_MULTIPLIERS.get(category)
+    if field is None or multipliers is None or not city_tier:
+        return None
+
+    norms = _load_locality_norms(path)
+    tier_data = norms.get(city_tier)
+    if tier_data is None or field not in tier_data:
+        return None
+
+    typical_value = tier_data[field]
+    if not typical_value:
+        return None
+
+    return {
+        "caution": round(typical_value * multipliers["caution"], 2),
+        "red": round(typical_value * multipliers["red"], 2) if "red" in multipliers else None,
+    }
