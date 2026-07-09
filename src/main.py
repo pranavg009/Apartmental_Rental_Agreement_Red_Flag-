@@ -74,7 +74,7 @@ def process_agreement(
     report("Scoring risk against reference norms...")
     flags = []
     for clause in clauses:
-        score = risk_scoring.score_clause(clause, monthly_rent=monthly_rent)
+        score = risk_scoring.score_clause(clause, monthly_rent=monthly_rent, city_tier=city_tier)
         score = guardrails.apply_confidence_guardrail(score)
 
         explanation = explainer.explain_clause(clause.category, score["risk_level"], score["reason"])
