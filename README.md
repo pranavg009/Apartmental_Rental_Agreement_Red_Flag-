@@ -5,6 +5,8 @@ An AI assistant that reviews rental agreement text, flags clauses worth a closer
 utilities), explains them in plain English, and suggests how to raise them with the landlord —
 without ever giving legal advice.
 
+**🔗 Live Demo:** [apartmental-rental-agreement.streamlit.app](https://apartmental-rental-agreement.streamlit.app/)
+
 ---
 
 ## 1. Problem Statement
@@ -59,8 +61,7 @@ needing Streamlit installed.
    restrained palette, so the seal reads as intentional rather than one of many competing effects.
 2. **A color system that means something, used everywhere** — the same red/amber/green hex
    values appear in the seal ring, the risk bar, every badge, the heatmap, *and* the PDF export,
-   with no stray inconsistent colors (a real bug — the heatmap originally used different colors
-   than the rest of the app — was caught and fixed as part of this pass).
+   with no stray inconsistent colors.
 3. **A distinct typeface for data vs. prose** — IBM Plex Mono is reserved for anything measured
    (the score, risk-bar counts, per-clause confidence %, regional-comparison figures), Source
    Serif 4 for headlines, Inter for body text — so numbers visually read as data, not decoration.
@@ -150,9 +151,18 @@ rule-based baseline for messier/unstructured agreements (see Section 6).
 
 ## 6. How to Run the Project
 
+### Option A — Try the hosted demo (no install required)
+
+👉 **[apartmental-rental-agreement.streamlit.app](https://apartmental-rental-agreement.streamlit.app/)**
+
+Upload a rental agreement (or paste text) directly in the browser — nothing to set up.
+
+### Option B — Run locally
+
 ```bash
-# 1. Clone/enter the project folder
-cd apartment_rental_agreement_red_flag_agent
+# 1. Clone the repository
+git clone <this-repo-url>
+cd Apartmental_Rental_Agreement_Red_Flag
 
 # 2. Install dependencies
 pip install -r requirements.txt
@@ -179,8 +189,10 @@ and `negotiation_coach.py` — the interfaces are already defined for this.
 
 ## 7. Demo Screenshots
 
-See `docs/screenshots/` (add screenshots of the Streamlit UI here after running locally:
-the clause cards view and the heatmap view).
+Live app: **[apartmental-rental-agreement.streamlit.app](https://apartmental-rental-agreement.streamlit.app/)**
+
+See `docs/screenshots/` for static screenshots of the Streamlit UI (clause cards view and the
+heatmap view).
 
 ---
 
@@ -249,17 +261,3 @@ negatives**, all `report_ui` presentation tests passing.
 - Expand the reference knowledge base with real state-level tenancy rules (with citations).
 - Add downloadable audio (MP3) export of the summary for offline listening, using a
   server-side TTS library, as an alternative to the browser-based Web Speech API.
-
----
-
-## 12. Team Member Names
-
-_Add team member names here._
-
----
-
-## Responsible Use Notice
-
-This is an educational project. Risk labels are based on general/common-practice norms and
-are not a substitute for legal advice. Always verify against your local tenancy law and
-consult a qualified professional before signing or acting on any rental agreement.
