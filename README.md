@@ -196,24 +196,7 @@ heatmap view).
 
 ---
 
-## 8. Results and Insights
-
-Running the three synthetic samples through the pipeline (benchmarked against Tier-1 metro norms):
-
-| Agreement | Red flags | Caution | Looks fine | Fairness Score |
-|---|---|---|---|---|
-| sample_agreement_1.txt (fair) | 0 | 0 | 8 | 100 / A |
-| sample_agreement_2.txt (mixed) | 4 | 3 | 1 | 46 / D |
-| sample_agreement_3.txt (predatory) | 7 | 1 | 0 | 0 / F |
-
-The agent correctly separates the fair agreement (all green, Grade A) from the predatory one
-(almost entirely red, Grade F), and identifies specific problem clauses in the mixed
-agreement — confirming both the clause-level scoring and the aggregate Fairness Score behave
-as intended across the risk spectrum.
-
----
-
-## 9. Validation / Evaluation Method
+## 8. Validation / Evaluation Method
 
 `tests/test_scoring.py` runs the classifier and risk-scoring engine against
 `data/labeled_eval_set.csv` (21 hand-labeled clauses) and checks:
@@ -234,7 +217,7 @@ negatives**, all `report_ui` presentation tests passing.
 
 ---
 
-## 10. Limitations
+## 9. Limitations
 
 - Rule-based scoring is grounded in general norms (`reference_norms.json`), not actual
   state/local tenancy law — thresholds may not apply to every jurisdiction.
@@ -251,13 +234,3 @@ negatives**, all `report_ui` presentation tests passing.
 - Voice/Accessibility Mode relies on the browser's built-in Web Speech API; voice quality and
   availability vary by browser (works in Chrome/Edge/Safari; not guaranteed in every
   environment) and requires the app to run in an actual browser tab, not a headless context.
-
----
-
-## 11. Future Improvements
-
-- Layer an LLM (via the existing `*_with_llm` hooks) for unstructured/non-numbered agreements.
-- Add OCR bounding-box heatmap overlay directly on scanned PDF images.
-- Expand the reference knowledge base with real state-level tenancy rules (with citations).
-- Add downloadable audio (MP3) export of the summary for offline listening, using a
-  server-side TTS library, as an alternative to the browser-based Web Speech API.
