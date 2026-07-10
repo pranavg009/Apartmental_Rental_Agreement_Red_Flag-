@@ -33,8 +33,8 @@ def speech_button(text: str, key: str, label: str = "Read Aloud", height: int = 
     Voice / Accessibility Mode: Play/Stop control using the browser's built-in
     Web Speech API (speechSynthesis). No server-side TTS library or API key
     needed -- the browser does the speaking. This renders inside a sandboxed
-    iframe (st.components.v1.html), so styles here are self-contained and
-    don't rely on the page's global CSS.
+    iframe (st.iframe), so styles here are self-contained and don't rely on
+    the page's global CSS.
     """
     safe_key = re.sub(r"\W", "_", key)
     safe_text = json.dumps(text)
@@ -71,7 +71,7 @@ def speech_button(text: str, key: str, label: str = "Read Aloud", height: int = 
       }})();
     </script>
     """
-    st.components.v1.html(html, height=height)
+    st.iframe(html, height=height)
 
 
 def clause_display_label(flag: dict) -> str:
@@ -89,7 +89,7 @@ def clause_display_label(flag: dict) -> str:
 
 st.set_page_config(page_title="Rental Agreement Red Flag Report", page_icon="📑", layout="wide")
 st.markdown(report_ui.CSS_BLOCK, unsafe_allow_html=True)
-st.components.v1.html(report_ui.render_hero_with_dotted_surface_html(), height=225)
+st.iframe(report_ui.render_hero_with_dotted_surface_html(), height=225)
 
 with st.sidebar:
     st.markdown('<div class="rfa-side-eyebrow">Step 1</div><div class="rfa-side-title">Provide your agreement</div>', unsafe_allow_html=True)
@@ -210,7 +210,7 @@ if "result" in st.session_state:
 
     with tab2:
         st.caption("Clauses highlighted directly in the original text, color-coded by risk.")
-        st.components.v1.html(result["heatmap_html"], height=600, scrolling=True)
+        st.iframe(result["heatmap_html"], height=600)
 
     st.markdown("<div style='margin-top:18px;'></div>", unsafe_allow_html=True)
     city_tier_label = st.session_state.get("city_tier_label")
